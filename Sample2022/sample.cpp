@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include "CarouselHorse.h"
 
 #define _USE_MATH_DEFINES
 #include <math.h>
@@ -182,6 +183,8 @@ int		ActiveButton;			// current button that is down
 GLuint	AxesList;				// list to hold the axes
 int		AxesOn;					// != 0 means to draw the axes
 GLuint	BoxList;				// object display list
+GLuint HorseList;
+GLuint circleList;
 int		DebugOn;				// != 0 means to print debugging info
 int		DepthCueOn;				// != 0 means to use intensity depth cueing
 int		DepthBufferOn;			// != 0 means to use the z-buffer
@@ -194,6 +197,15 @@ int		ShadowsOn;				// != 0 means to turn shadows on
 float	Time;					// used for animation, this has a value between 0. and 1.
 int		Xmouse, Ymouse;			// mouse values
 float	Xrot, Yrot;				// rotation angles in degrees
+
+float translate1;
+float translate2;
+float rocking;
+float circleRad;
+float angle;
+float x;
+float z;
+
 
 
 // function prototypes:
@@ -341,6 +353,7 @@ Animate( )
 	ms %= MS_PER_CYCLE;							// makes the value of ms between 0 and MS_PER_CYCLE-1
 	Time = (float)ms / (float)MS_PER_CYCLE;		// makes the value of Time between 0. and slightly less than 1.
 
+
 	// for example, if you wanted to spin an object in Display( ), you might call: glRotatef( 360.f*Time,   0., 1., 0. );
 
 	// force a call to Display( ) next time it is convenient:
@@ -392,11 +405,9 @@ Display( )
 
 	glMatrixMode( GL_PROJECTION );
 	glLoadIdentity( );
-	if( NowProjection == ORTHO )
-		glOrtho( -2.f, 2.f,     -2.f, 2.f,     0.1f, 1000.f );
-	else
-		gluPerspective( 70.f, 1.f,	0.1f, 1000.f );
 
+	
+	gluPerspective(70.f, 1.f, 0.1f, 1000.f);
 	// place the objects into the scene:
 
 	glMatrixMode( GL_MODELVIEW );
@@ -404,7 +415,16 @@ Display( )
 
 	// set the eye position, look-at position, and up-vector:
 
-	gluLookAt( 0.f, 0.f, 3.f,     0.f, 0.f, 0.f,     0.f, 1.f, 0.f );
+	//gluLookAt( 2.f, 2.f, 2.f,     0.f, 0.f, 0.f,     0.f, 1.f, 0.f );
+	if (NowProjection == ORTHO) {
+		Yrot = 0.0f;
+		Xrot = 0.0f;
+		Scale = 1.0f;
+		gluLookAt(0.0f, 0.0f, 0.01f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
+	}
+	else {
+		gluLookAt(2.f, 2.f, 2.f, 0.f, 0.f, 0.f, 0.f, 1.f, 0.f);
+	}
 
 	// rotate the scene:
 
@@ -448,7 +468,26 @@ Display( )
 
 	// draw the box object by calling up its display list:
 
-	glCallList( BoxList );
+
+	glCallList(circleList);
+	translate1 = 0.25f * sin(20.0f*Time);
+	glTranslatef(0.0f, translate1, 0.0f);
+
+
+	angle = Time;
+	x = 2.0f * sin((F_2_PI)*angle);
+	z = 2.0f * cos((F_2_PI)*angle);
+	glTranslatef(x, 0.0f, z);
+	glRotatef(360.0f*Time, 0.0f, 1.0f, 0.0f);
+
+
+	
+
+
+	rocking = 15.0f * cos(20.0f*Time);
+	glRotatef(rocking, 0.0f, 0.0f, 1.0f);
+	glScalef(0.5f, 0.5f, 0.5f);
+	glCallList(HorseList);
 
 #ifdef DEMO_Z_FIGHTING
 	if( DepthFightingOn != 0 )
@@ -687,8 +726,8 @@ InitMenus( )
 	glutAddMenuEntry( "On",   1 );
 
 	int projmenu = glutCreateMenu( DoProjectMenu );
-	glutAddMenuEntry( "Orthographic",  ORTHO );
-	glutAddMenuEntry( "Perspective",   PERSP );
+	glutAddMenuEntry( "Inside",  ORTHO );
+	glutAddMenuEntry( "Outside",   PERSP );
 
 	int mainmenu = glutCreateMenu( DoMainMenu );
 	glutAddSubMenu(   "Axes",          axesmenu);
@@ -826,214 +865,67 @@ InitLists( )
 	float dz = BOXSIZE / 2.f;
 	glutSetWindow( MainWindow );
 
-	// create the object:
+	// create the objects:
 
+	// Create a display list
+	circleList = glGenLists(1);
 
-	BoxList = glGenLists( 1 );
-	glNewList( BoxList, GL_COMPILE );
-
-
-	glBegin(GL_QUADS);
-		glColor3f(1.0f, 0.5f, 0.0f); // Orange
-			glVertex3f(-1.0f, -1.0f, -1.0f);
-			glVertex3f(1.0f, -1.0f, -1.0f);
-			glVertex3f(1.0f, -1.0f, 1.0f);
-			glVertex3f(-1.0f, -1.0f, 1.0f);
-	glEnd();
-
-	// Draw the front wall of the dog house
-	glBegin(GL_TRIANGLES);
-		glColor3f(0.0f,0.0f,1.0f); // blue
-			glVertex3f(-1.0f, -1.0f, 1.0f);
-			glVertex3f(1.0f, -1.0f, 1.0f);
-			glVertex3f(0.0f, 1.0f, 0.0f);
-	glEnd();
-
-	// Draw the side walls
-	glBegin(GL_QUADS);
-		glColor3f(1.0f, 0.0f, 0.0f); // red
-			glVertex3f(1.0f, -1.0f, -1.0f);
-			glVertex3f(1.0f, -1.0f, 1.0f);
-			glVertex3f(0.0f, 1.0f, 0.0f);
-			glVertex3f(0.0f, 1.0f, -1.0f);
-
-			glVertex3f(0.0f, 1.0f, -1.0f);
-			glVertex3f(0.0f, 1.0f, 0.0f);
-			glVertex3f(-1.0f, -1.0f, 1.0f);
-			glVertex3f(-1.0f, -1.0f, -1.0f);
-	glEnd();
-
-	glBegin(GL_TRIANGLES);
-		glColor3f(0.0f, 1.0f, 0.0f); // green
-			glVertex3f(1.0f, -0.25f, -1.0f);
-			glVertex3f(-1.0f, -0.25f, -1.0f);
-			glVertex3f(0.0f, 1.0f, -1.0f);
-			glEnd();
-
-	glBegin(GL_TRIANGLES);
-		glColor3f(1.0f, 1.0f, 1.0f); // white
-			glVertex3f(-1.0f, -0.25f, 0.65f);
-			glVertex3f(1.0f, -0.25f, 0.65f);
-			glVertex3f(0.0f, 1.0f, 0.0f);
-	glEnd();
-
-	glBegin(GL_QUADS);
-		glColor3f( 1.0f, 0.0f, 0.6f ); // purple
-			glVertex3f(1.0f, -0.25f, .65f);
-			glVertex3f(0.0f, 1.0f, 0.0f);
-			glVertex3f(0.0f, 1.0f, -1.0f);
-			glVertex3f(1.0f, -0.25f, -1.0f);
-	glEnd();
-
-	glBegin(GL_QUADS);
-		glColor3f(1.0f, 0.0f, 0.6f); // purple
-			glVertex3f(-1.0f, -0.25f, 0.65f);
-			glVertex3f(0.0f, 1.0f, 0.0f);
-			glVertex3f(0.0f, 1.0f, -1.0f);
-			glVertex3f(-1.0f, -0.25f, -1.0f);
-	glEnd();
-
-	glBegin(GL_QUADS);
-		glColor3f(0.5f, 0.4f, 0.6f); // bluish grey
-			glVertex3f(-1.0f, -0.25f, 0.65f);
-			glVertex3f(-0.635f, -0.25f, 0.65f);
-			glVertex3f(-0.635f, -0.25f, -1.0f);
-			glVertex3f(-1.0f, -0.25f, -1.0f);
-	glEnd();
-
-	glBegin(GL_QUADS);
-		glColor3f(0.5f, 0.4f, 0.6f); // bluish grey
-			glVertex3f(1.0f, -0.25f, 0.65f);
-			glVertex3f(0.635f, -0.25f, 0.65f);
-			glVertex3f(0.635f, -0.25f, -1.0f);
-			glVertex3f(1.0f, -0.25f, -1.0f);
-	glEnd();
-
-	const int sides = 20; // Number of sides of the cylinder
-	const float radius = .1f;
-	const float height = 2.0f;
-
-	float posX1 = 1.0f;  // X position
-	float posY1 = -1.0f;  // Y position
-	float posZ1 = 0.0f;  // Z position
+	// Define a display list for drawing a circle
+	glNewList(circleList, GL_COMPILE);
 	glPushMatrix();
-	glTranslatef(posX1, posY1, posZ1);  // Translate to the desired position
-	glRotatef(90.0f, 1.0f, 0.0f, 0.0f);
-	// cylinder "floaters"
-	glBegin(GL_QUAD_STRIP);
-	glColor3f(0.5f, 0.1f, 0.1f);
-	for (int i = 0; i <= sides; ++i) {
-		float theta = 2.0f * M_PI * static_cast<float>(i) / static_cast<float>(sides);
-		float x = radius * cos(theta);
-		float z = radius * sin(theta);
 
-		glVertex3f(x, height / 2.0f, z);
-		glVertex3f(x, -height / 2.0f, z);
-	}
+	const float radius = 2.0;
+	const int numSegments = 100;
+	const float angleIncrement = 2.0 * M_PI / numSegments;
 
-	glEnd();
-
-	glBegin(GL_POLYGON);
-	for (int i = 0; i < sides; ++i) {
-		float theta = 2.0f * M_PI * static_cast<float>(i) / static_cast<float>(sides);
-		float x = radius * cos(theta);
-		float z = radius * sin(theta);
-		glVertex3f(x, height / 2.0f, z);
-	}
-	glEnd();
-
-	glBegin(GL_POLYGON);
-	for (int i = 0; i < sides; ++i) {
-		float theta = 2.0f * M_PI * static_cast<float>(i) / static_cast<float>(sides);
-		float x = radius * cos(theta);
-		float z = radius * sin(theta);
-		glVertex3f(x, -height / 2.0f, z);
+	glBegin(GL_LINE_LOOP);
+	glColor3f(1.0, 0.0, 0.0);
+	for (int i = 0; i < numSegments; ++i) {
+		float angle = i * angleIncrement;
+		float x = radius * cos(angle);
+		float z = radius * sin(angle);
+		glVertex3f(x, 0.0, z);
 	}
 	glEnd();
 	glPopMatrix();
+	glEndList();
 
-	float posX2 = -1.0f;  // X position
-	float posY2 = -1.0f;  // Y position
-	float posZ2 = 0.0f;  // Z position
+	HorseList = glGenLists(1);
+	glNewList(HorseList, GL_COMPILE);
 	glPushMatrix();
-	glTranslatef(posX2, posY2, posZ2);  // Translate to the desired position
-	glRotatef(90.0f, 1.0f, 0.0f, 0.0f);
+	glRotatef(90.f, 0., 1., 0.);
+	glTranslatef(0., -1.1f, 0.f);
+	glBegin(GL_TRIANGLES);
+	for (int i = 0; i < HORSEntris; i++)
+	{
+		struct point p0 = HORSEpoints[HORSEtris[i].p0];
+		struct point p1 = HORSEpoints[HORSEtris[i].p1];
+		struct point p2 = HORSEpoints[HORSEtris[i].p2];
 
-	glBegin(GL_QUAD_STRIP);
+		// fake "lighting" from above:
 
-	for (int i = 0; i <= sides; ++i) {
-		float theta = 2.0f * M_PI * static_cast<float>(i) / static_cast<float>(sides);
-		float x = radius * cos(theta);
-		float z = radius * sin(theta);
+		float p01[3], p02[3], n[3];
+		p01[0] = p1.x - p0.x;
+		p01[1] = p1.y - p0.y;
+		p01[2] = p1.z - p0.z;
+		p02[0] = p2.x - p0.x;
+		p02[1] = p2.y - p0.y;
+		p02[2] = p2.z - p0.z;
+		Cross(p01, p02, n);
+		Unit(n, n);
+		n[1] = (float)fabs(n[1]);
+		// simulating a glColor3f( 1., 1., 0. ) = yellow:
+		glColor3f(1.f * n[1], 1.f * n[1], 0.f * n[1]);
 
-		glVertex3f(x, height / 2.0f, z);
-		glVertex3f(x, -height / 2.0f, z);
-	}
-
-	glEnd();
-
-	glBegin(GL_POLYGON);
-	for (int i = 0; i < sides; ++i) {
-		float theta = 2.0f * M_PI * static_cast<float>(i) / static_cast<float>(sides);
-		float x = radius * cos(theta);
-		float z = radius * sin(theta);
-		glVertex3f(x, height / 2.0f, z);
-	}
-	glEnd();
-
-	glBegin(GL_POLYGON);
-	for (int i = 0; i < sides; ++i) {
-		float theta = 2.0f * M_PI * static_cast<float>(i) / static_cast<float>(sides);
-		float x = radius * cos(theta);
-		float z = radius * sin(theta);
-		glVertex3f(x, -height / 2.0f, z);
+		glVertex3f(p0.x, p0.y, p0.z);
+		glVertex3f(p1.x, p1.y, p1.z);
+		glVertex3f(p2.x, p2.y, p2.z);
 	}
 	glEnd();
 	glPopMatrix();
-	// Back cylinder "floater" scaled up
-	float posX3 = 0.0f;  // X position
-	float posY3 = -1.0f;  // Y position
-	float posZ3 = 1.0f;  // Z position
-	glPushMatrix();
-	glTranslatef(posX3, posY3, posZ3);  // Translate to the desired position
-	glRotatef(90.0f, 1.0f, 0.0f, 0.0f);
-	glRotatef(90.0f, 0.0f, 0.0f, 1.0f);
-	glScalef(2.0f, 1.0f, 2.0f);
-
-	glBegin(GL_QUAD_STRIP);
-
-	for (int i = 0; i <= sides; ++i) {
-		float theta = 2.0f * M_PI * static_cast<float>(i) / static_cast<float>(sides);
-		float x = radius * cos(theta);
-		float z = radius * sin(theta);
-
-		glVertex3f(x, height / 2.0f, z);
-		glVertex3f(x, -height / 2.0f, z);
-	}
-
-	glEnd();
-
-	glBegin(GL_POLYGON);
-	for (int i = 0; i < sides; ++i) {
-		float theta = 2.0f * M_PI * static_cast<float>(i) / static_cast<float>(sides);
-		float x = radius * cos(theta);
-		float z = radius * sin(theta);
-		glVertex3f(x, height / 2.0f, z);
-	}
-	glEnd();
-
-	glBegin(GL_POLYGON);
-	for (int i = 0; i < sides; ++i) {
-		float theta = 2.0f * M_PI * static_cast<float>(i) / static_cast<float>(sides);
-		float x = radius * cos(theta);
-		float z = radius * sin(theta);
-		glVertex3f(x, -height / 2.0f, z);
-	}
-	glEnd();
-	glPopMatrix();
+	glEndList();
 
 
-	glEndList( );
 
 
 	// create the axes:

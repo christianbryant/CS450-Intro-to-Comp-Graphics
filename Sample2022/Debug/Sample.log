@@ -1,30 +1,10 @@
 ﻿  sample.cpp
-C:\Users\Jax\Downloads\SampleWindows\Sample2022\sample.cpp(926,15): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\Jax\Downloads\SampleWindows\Sample2022\sample.cpp(927,11): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\Jax\Downloads\SampleWindows\Sample2022\sample.cpp(928,11): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\Jax\Downloads\SampleWindows\Sample2022\sample.cpp(938,15): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\Jax\Downloads\SampleWindows\Sample2022\sample.cpp(939,11): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\Jax\Downloads\SampleWindows\Sample2022\sample.cpp(940,11): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\Jax\Downloads\SampleWindows\Sample2022\sample.cpp(947,15): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\Jax\Downloads\SampleWindows\Sample2022\sample.cpp(948,11): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\Jax\Downloads\SampleWindows\Sample2022\sample.cpp(949,11): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\Jax\Downloads\SampleWindows\Sample2022\sample.cpp(965,15): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\Jax\Downloads\SampleWindows\Sample2022\sample.cpp(966,11): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\Jax\Downloads\SampleWindows\Sample2022\sample.cpp(967,11): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\Jax\Downloads\SampleWindows\Sample2022\sample.cpp(977,15): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\Jax\Downloads\SampleWindows\Sample2022\sample.cpp(978,11): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\Jax\Downloads\SampleWindows\Sample2022\sample.cpp(979,11): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\Jax\Downloads\SampleWindows\Sample2022\sample.cpp(986,15): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\Jax\Downloads\SampleWindows\Sample2022\sample.cpp(987,11): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\Jax\Downloads\SampleWindows\Sample2022\sample.cpp(988,11): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\Jax\Downloads\SampleWindows\Sample2022\sample.cpp(1006,15): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\Jax\Downloads\SampleWindows\Sample2022\sample.cpp(1007,11): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\Jax\Downloads\SampleWindows\Sample2022\sample.cpp(1008,11): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\Jax\Downloads\SampleWindows\Sample2022\sample.cpp(1018,15): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\Jax\Downloads\SampleWindows\Sample2022\sample.cpp(1019,11): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\Jax\Downloads\SampleWindows\Sample2022\sample.cpp(1020,11): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\Jax\Downloads\SampleWindows\Sample2022\sample.cpp(1027,15): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\Jax\Downloads\SampleWindows\Sample2022\sample.cpp(1028,11): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\Jax\Downloads\SampleWindows\Sample2022\sample.cpp(1029,11): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\Jax\Downloads\SampleWindows\Sample2022\sample.cpp(473,21): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\Jax\Downloads\SampleWindows\Sample2022\sample.cpp(478,11): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\Jax\Downloads\SampleWindows\Sample2022\sample.cpp(479,11): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\Jax\Downloads\SampleWindows\Sample2022\sample.cpp(487,18): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\Jax\Downloads\SampleWindows\Sample2022\sample.cpp(879,42): warning C4305: 'initializing': truncation from 'double' to 'float'
+C:\Users\Jax\Downloads\SampleWindows\Sample2022\sample.cpp(885,11): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\Jax\Downloads\SampleWindows\Sample2022\sample.cpp(886,11): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
 sample.obj : warning LNK4075: ignoring '/EDITANDCONTINUE' due to '/INCREMENTAL:NO' specification
   Sample.vcxproj -> C:\Users\Jax\Downloads\SampleWindows\Sample2022\Debug\Sample.exe
