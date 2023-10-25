@@ -107,6 +107,18 @@ enum ButtonVals
 	QUIT
 };
 
+GLenum Lights [ ] =
+{
+	GL_LIGHT0,
+	GL_LIGHT1,
+	GL_LIGHT2,
+	GL_LIGHT3,
+	GL_LIGHT4,
+	GL_LIGHT5,
+	GL_LIGHT6,
+	GL_LIGHT7
+};
+
 // window background color (rgba):
 
 const GLfloat BACKCOLOR[ ] = { 0., 0., 0., 1. };
@@ -162,7 +174,12 @@ const GLfloat FOGEND      = 4.f;
 
 // for lighting:
 
-const float	WHITE[ ] = { 1.,1.,1.,1. };
+float	WHITE[ ] = { 1.f,1.f,1.f,1.f };
+float   REDLIGHT[ ] = { 1.f,0.f,0.f,1.f };
+float   GREENLIGHT[ ] = { 0.f,1.f,0.f,1.f };
+float   BLUELIGHT[ ] = { 0.f,0.f,1.f,1.f };
+float   YELLOWLIGHT[ ] = { 1.f,1.f,0.f,1.f };
+
 
 // for animation:
 
@@ -194,6 +211,21 @@ int		ShadowsOn;				// != 0 means to turn shadows on
 float	Time;					// used for animation, this has a value between 0. and 1.
 int		Xmouse, Ymouse;			// mouse values
 float	Xrot, Yrot;				// rotation angles in degrees
+
+// Models to be loaded
+int DinoDL;
+int DeerDL;
+int SalmonDL;
+int GridDL;
+int SphereDL;
+
+// Keyboard inputs:
+bool Frozen;
+bool light_type;
+int light_color; // 0 = white, 1 = red, 2 = yellow, 3 = green, 5 = blue
+
+// Light Position
+float light_pos [ ] = { 1.0f, 1.0f, 1.0f };
 
 
 // function prototypes:
@@ -228,6 +260,19 @@ float			Dot(float [3], float [3]);
 float			Unit(float [3], float [3]);
 float			Unit(float [3]);
 
+
+// Defining the grid
+#define XSIDE 5
+#define X0 (-XSIDE/2.0f)
+#define NX 100
+#define DX ( XSIDE/(float)NX)
+
+#define YGRID 0.0f
+
+#define ZSIDE 5
+#define Z0 (-ZSIDE/2.0f)
+#define NZ 100
+#define DZ ( ZSIDE/(float)NZ)
 
 // utility to create an array from 3 separate values:
 
@@ -273,13 +318,13 @@ MulArray3(float factor, float a, float b, float c )
 
 // these are here for when you need them -- just uncomment the ones you need:
 
-//#include "setmaterial.cpp"
-//#include "setlight.cpp"
-//#include "osusphere.cpp"
+#include "setmaterial.cpp"
+#include "setlight.cpp"
+#include "osusphere.cpp"
 //#include "osucone.cpp"
 //#include "osutorus.cpp"
 //#include "bmptotexture.cpp"
-//#include "loadobjfile.cpp"
+#include "loadobjfile.cpp"
 //#include "keytime.cpp"
 //#include "glslprogram.cpp"
 
@@ -404,7 +449,7 @@ Display( )
 
 	// set the eye position, look-at position, and up-vector:
 
-	gluLookAt( 0.f, 0.f, 3.f,     0.f, 0.f, 0.f,     0.f, 1.f, 0.f );
+	gluLookAt(2.f, 2.f, 2.f, 0.f, 0.f, 0.f, 0.f, 1.f, 0.f);
 
 	// rotate the scene:
 
@@ -437,18 +482,59 @@ Display( )
 
 	if( AxesOn != 0 )
 	{
+		glPushAttrib(GL_CURRENT_BIT);
 		glColor3fv( &Colors[NowColor][0] );
 		glCallList( AxesList );
+		glPopAttrib();
 	}
+	glPushMatrix();
+	light_pos[0] = 1.5f * sin((F_2_PI)*Time);
+	light_pos[2] = 1.5f * cos((F_2_PI)*Time);
+	glTranslatef(light_pos[0], light_pos[1], light_pos[2]);
+	if (light_color == 0) {
+		glColor3f(1.0f, 1.0f, 1.0f);
+	}
+	else {
+		glColor3fv(&Colors[light_color - 1][0]);
+	}
+	glCallList(SphereDL);
+	glPopMatrix();
+
+	// Lighting setup:
+	glEnable(GL_LIGHTING);
+	if (light_color == 0 && !light_type) {
+		SetPointLight(GL_LIGHT0, light_pos[0], light_pos[1], light_pos[2], 1.0f, 1.0f, 1.0f);
+	}
+	else if (light_color != 0 && !light_type) {
+		SetPointLight(GL_LIGHT0, light_pos[0], light_pos[1], light_pos[2], Colors[light_color - 1][0], Colors[light_color - 1][1], Colors[light_color - 1][2]);
+	}
+	else if(light_color == 0 && light_type){
+		SetSpotLight(GL_LIGHT0, light_pos[0], light_pos[1], light_pos[2], 0.0f, -1.0f, 0.0f, 1.0f, 1.0f, 1.f);
+	}
+	else if (light_color != 0 && light_type) {
+		SetSpotLight(GL_LIGHT0, light_pos[0], light_pos[1], light_pos[2], 0.0f, -1.0f, 0.0f, Colors[light_color - 1][0], Colors[light_color - 1][1], Colors[light_color - 1][2]);
+	}
+	
+	
+	// Set the light properties
+	// Enable the light
+
 
 	// since we are using glScalef( ), be sure the normals get unitized:
 
 	glEnable( GL_NORMALIZE );
 
+	glEnable(GL_LIGHTING);
+
 
 	// draw the box object by calling up its display list:
+	glPushMatrix();
+	glCallList(GridDL);
+	glPopMatrix();
+	glCallList( DinoDL );
+	glCallList( DeerDL );
+	glCallList( SalmonDL );
 
-	glCallList( BoxList );
 
 #ifdef DEMO_Z_FIGHTING
 	if( DepthFightingOn != 0 )
@@ -496,7 +582,7 @@ Display( )
 
 	// be sure the graphics buffer has been sent:
 	// note: be sure to use glFlush( ) here, not glFinish( ) !
-
+	glDisable(GL_LIGHTING);
 	glFlush( );
 }
 
@@ -828,212 +914,64 @@ InitLists( )
 
 	// create the object:
 
-
-	BoxList = glGenLists( 1 );
-	glNewList( BoxList, GL_COMPILE );
-
-
-	glBegin(GL_QUADS);
-		glColor3f(1.0f, 0.5f, 0.0f); // Orange
-			glVertex3f(-1.0f, -1.0f, -1.0f);
-			glVertex3f(1.0f, -1.0f, -1.0f);
-			glVertex3f(1.0f, -1.0f, 1.0f);
-			glVertex3f(-1.0f, -1.0f, 1.0f);
-	glEnd();
-
-	// Draw the front wall of the dog house
-	glBegin(GL_TRIANGLES);
-		glColor3f(0.0f,0.0f,1.0f); // blue
-			glVertex3f(-1.0f, -1.0f, 1.0f);
-			glVertex3f(1.0f, -1.0f, 1.0f);
-			glVertex3f(0.0f, 1.0f, 0.0f);
-	glEnd();
-
-	// Draw the side walls
-	glBegin(GL_QUADS);
-		glColor3f(1.0f, 0.0f, 0.0f); // red
-			glVertex3f(1.0f, -1.0f, -1.0f);
-			glVertex3f(1.0f, -1.0f, 1.0f);
-			glVertex3f(0.0f, 1.0f, 0.0f);
-			glVertex3f(0.0f, 1.0f, -1.0f);
-
-			glVertex3f(0.0f, 1.0f, -1.0f);
-			glVertex3f(0.0f, 1.0f, 0.0f);
-			glVertex3f(-1.0f, -1.0f, 1.0f);
-			glVertex3f(-1.0f, -1.0f, -1.0f);
-	glEnd();
-
-	glBegin(GL_TRIANGLES);
-		glColor3f(0.0f, 1.0f, 0.0f); // green
-			glVertex3f(1.0f, -0.25f, -1.0f);
-			glVertex3f(-1.0f, -0.25f, -1.0f);
-			glVertex3f(0.0f, 1.0f, -1.0f);
+	GridDL = glGenLists(1);
+	glNewList(GridDL, GL_COMPILE);
+		glPushMatrix();
+		SetMaterial(0.6f, 0.6f, 0.6f, 30.0f);
+		glNormal3f(0.0f, 1.0f, 0.0f);
+		for (int i = 0; i < NZ; i++) {
+			glBegin(GL_QUAD_STRIP);
+			for (int j = 0; j <= NX; j++) {
+				glVertex3f(X0 + (float)j * DX, YGRID, Z0 + (float)i * DZ);
+				glVertex3f(X0 + (float)j * DX, YGRID, Z0 + (float)(i + 1) * DZ);
+			}
 			glEnd();
-
-	glBegin(GL_TRIANGLES);
-		glColor3f(1.0f, 1.0f, 1.0f); // white
-			glVertex3f(-1.0f, -0.25f, 0.65f);
-			glVertex3f(1.0f, -0.25f, 0.65f);
-			glVertex3f(0.0f, 1.0f, 0.0f);
-	glEnd();
-
-	glBegin(GL_QUADS);
-		glColor3f( 1.0f, 0.0f, 0.6f ); // purple
-			glVertex3f(1.0f, -0.25f, .65f);
-			glVertex3f(0.0f, 1.0f, 0.0f);
-			glVertex3f(0.0f, 1.0f, -1.0f);
-			glVertex3f(1.0f, -0.25f, -1.0f);
-	glEnd();
-
-	glBegin(GL_QUADS);
-		glColor3f(1.0f, 0.0f, 0.6f); // purple
-			glVertex3f(-1.0f, -0.25f, 0.65f);
-			glVertex3f(0.0f, 1.0f, 0.0f);
-			glVertex3f(0.0f, 1.0f, -1.0f);
-			glVertex3f(-1.0f, -0.25f, -1.0f);
-	glEnd();
-
-	glBegin(GL_QUADS);
-		glColor3f(0.5f, 0.4f, 0.6f); // bluish grey
-			glVertex3f(-1.0f, -0.25f, 0.65f);
-			glVertex3f(-0.635f, -0.25f, 0.65f);
-			glVertex3f(-0.635f, -0.25f, -1.0f);
-			glVertex3f(-1.0f, -0.25f, -1.0f);
-	glEnd();
-
-	glBegin(GL_QUADS);
-		glColor3f(0.5f, 0.4f, 0.6f); // bluish grey
-			glVertex3f(1.0f, -0.25f, 0.65f);
-			glVertex3f(0.635f, -0.25f, 0.65f);
-			glVertex3f(0.635f, -0.25f, -1.0f);
-			glVertex3f(1.0f, -0.25f, -1.0f);
-	glEnd();
-
-	const int sides = 20; // Number of sides of the cylinder
-	const float radius = .1f;
-	const float height = 2.0f;
-
-	float posX1 = 1.0f;  // X position
-	float posY1 = -1.0f;  // Y position
-	float posZ1 = 0.0f;  // Z position
-	glPushMatrix();
-	glTranslatef(posX1, posY1, posZ1);  // Translate to the desired position
-	glRotatef(90.0f, 1.0f, 0.0f, 0.0f);
-	// cylinder "floaters"
-	glBegin(GL_QUAD_STRIP);
-	glColor3f(0.5f, 0.1f, 0.1f);
-	for (int i = 0; i <= sides; ++i) {
-		float theta = 2.0f * M_PI * static_cast<float>(i) / static_cast<float>(sides);
-		float x = radius * cos(theta);
-		float z = radius * sin(theta);
-
-		glVertex3f(x, height / 2.0f, z);
-		glVertex3f(x, -height / 2.0f, z);
-	}
-
-	glEnd();
-
-	glBegin(GL_POLYGON);
-	for (int i = 0; i < sides; ++i) {
-		float theta = 2.0f * M_PI * static_cast<float>(i) / static_cast<float>(sides);
-		float x = radius * cos(theta);
-		float z = radius * sin(theta);
-		glVertex3f(x, height / 2.0f, z);
-	}
-	glEnd();
-
-	glBegin(GL_POLYGON);
-	for (int i = 0; i < sides; ++i) {
-		float theta = 2.0f * M_PI * static_cast<float>(i) / static_cast<float>(sides);
-		float x = radius * cos(theta);
-		float z = radius * sin(theta);
-		glVertex3f(x, -height / 2.0f, z);
-	}
-	glEnd();
+		}
 	glPopMatrix();
+	glEndList();
 
-	float posX2 = -1.0f;  // X position
-	float posY2 = -1.0f;  // Y position
-	float posZ2 = 0.0f;  // Z position
-	glPushMatrix();
-	glTranslatef(posX2, posY2, posZ2);  // Translate to the desired position
-	glRotatef(90.0f, 1.0f, 0.0f, 0.0f);
+	DinoDL = glGenLists( 1 );
+	glNewList(DinoDL, GL_COMPILE);
+		glPushMatrix();
+		glTranslatef(1.0, 0.4, 1.0);
+		glScalef(0.1, 0.1, 0.1);
+		glRotatef(90.0f, 0.0f, 1.0f, 0.0f);
+		glShadeModel(GL_SMOOTH);
+		SetMaterial(1.0f, 0.0f, 0.0f, 30.0f);
+		LoadObjFile( (char *) "dino.obj" );
+		glPopMatrix();
+	glEndList();
+	DeerDL = glGenLists(1);
+	glNewList(DeerDL, GL_COMPILE);
+		glPushMatrix();
+		glTranslatef(-1.0, 0.65, 1.0);
+		glScalef(0.2, 0.2, 0.2);
+		glRotatef(90.0f, 0.0f, 1.0f, 0.0f);
+		glShadeModel(GL_SMOOTH);
+		SetMaterial(0.0f, 1.0f, 0.0f,1000.0f);
+		LoadObjFile((char*)"deer.obj");
+		glPopMatrix();
+	glEndList();
+	SalmonDL = glGenLists(1);
+	glNewList(SalmonDL, GL_COMPILE);
+		glPushMatrix();
+		glTranslatef(0.0, 0.5, -1.0);
+		glScalef(0.4, 0.4, 0.4);
+		glRotatef(90.0f, 0.0f, 1.0f, 0.0f);
+		glShadeModel(GL_SMOOTH);
+		SetMaterial(0.0f, 0.0f, 1.0f, 0.0f);
+		LoadObjFile((char*)"salmon.obj");
+		glPopMatrix();
+	glEndList();
 
-	glBegin(GL_QUAD_STRIP);
-
-	for (int i = 0; i <= sides; ++i) {
-		float theta = 2.0f * M_PI * static_cast<float>(i) / static_cast<float>(sides);
-		float x = radius * cos(theta);
-		float z = radius * sin(theta);
-
-		glVertex3f(x, height / 2.0f, z);
-		glVertex3f(x, -height / 2.0f, z);
-	}
-
-	glEnd();
-
-	glBegin(GL_POLYGON);
-	for (int i = 0; i < sides; ++i) {
-		float theta = 2.0f * M_PI * static_cast<float>(i) / static_cast<float>(sides);
-		float x = radius * cos(theta);
-		float z = radius * sin(theta);
-		glVertex3f(x, height / 2.0f, z);
-	}
-	glEnd();
-
-	glBegin(GL_POLYGON);
-	for (int i = 0; i < sides; ++i) {
-		float theta = 2.0f * M_PI * static_cast<float>(i) / static_cast<float>(sides);
-		float x = radius * cos(theta);
-		float z = radius * sin(theta);
-		glVertex3f(x, -height / 2.0f, z);
-	}
-	glEnd();
-	glPopMatrix();
-	// Back cylinder "floater" scaled up
-	float posX3 = 0.0f;  // X position
-	float posY3 = -1.0f;  // Y position
-	float posZ3 = 1.0f;  // Z position
-	glPushMatrix();
-	glTranslatef(posX3, posY3, posZ3);  // Translate to the desired position
-	glRotatef(90.0f, 1.0f, 0.0f, 0.0f);
-	glRotatef(90.0f, 0.0f, 0.0f, 1.0f);
-	glScalef(2.0f, 1.0f, 2.0f);
-
-	glBegin(GL_QUAD_STRIP);
-
-	for (int i = 0; i <= sides; ++i) {
-		float theta = 2.0f * M_PI * static_cast<float>(i) / static_cast<float>(sides);
-		float x = radius * cos(theta);
-		float z = radius * sin(theta);
-
-		glVertex3f(x, height / 2.0f, z);
-		glVertex3f(x, -height / 2.0f, z);
-	}
-
-	glEnd();
-
-	glBegin(GL_POLYGON);
-	for (int i = 0; i < sides; ++i) {
-		float theta = 2.0f * M_PI * static_cast<float>(i) / static_cast<float>(sides);
-		float x = radius * cos(theta);
-		float z = radius * sin(theta);
-		glVertex3f(x, height / 2.0f, z);
-	}
-	glEnd();
-
-	glBegin(GL_POLYGON);
-	for (int i = 0; i < sides; ++i) {
-		float theta = 2.0f * M_PI * static_cast<float>(i) / static_cast<float>(sides);
-		float x = radius * cos(theta);
-		float z = radius * sin(theta);
-		glVertex3f(x, -height / 2.0f, z);
-	}
-	glEnd();
-	glPopMatrix();
+	SphereDL = glGenLists( 1 );
+		glNewList(SphereDL, GL_COMPILE);
+		OsuSphere(0.05, 20, 20);
+	glEndList();
+	
 
 
-	glEndList( );
+	
 
 
 	// create the axes:
@@ -1062,16 +1000,51 @@ Keyboard( unsigned char c, int x, int y )
 			NowProjection = ORTHO;
 			break;
 
-		case 'p':
-		case 'P':
-			NowProjection = PERSP;
-			break;
-
 		case 'q':
 		case 'Q':
 		case ESCAPE:
 			DoMainMenu( QUIT );	// will not return here
 			break;				// happy compiler
+
+		case 'f':
+		case 'F':
+			Frozen = !Frozen;
+			if (Frozen) {
+				glutIdleFunc(NULL);
+			}
+			else {
+				glutIdleFunc(Animate);
+			}
+			break;
+		case 'w':
+		case 'W':
+			light_color = 0;
+			break;
+		case 'r':
+		case 'R':
+			light_color = 1;
+			break;
+		case 'g':
+		case 'G':
+			light_color = 3;
+			break;
+		case 'b':
+		case 'B':
+			light_color = 5;
+			
+			break;
+		case 'y':
+		case 'Y':
+			light_color = 2;
+			break;
+		case 'p':
+		case 'P':
+			light_type = 0;
+			break;
+		case 's':
+		case 'S':
+			light_type = 1;
+			break;
 
 		default:
 			fprintf( stderr, "Don't know what to do with keyboard hit: '%c' (0x%0x)\n", c, c );
@@ -1196,6 +1169,9 @@ Reset( )
 	NowColor = YELLOW;
 	NowProjection = PERSP;
 	Xrot = Yrot = 0.;
+	Frozen = 0;
+	light_type = 0;
+	light_color = 0;
 }
 
 
