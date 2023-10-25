@@ -24,4 +24,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <Object Include="deer.obj">
+      <Filter>Resource Files</Filter>
+    </Object>
+    <Object Include="dino.obj">
+      <Filter>Resource Files</Filter>
+    </Object>
+    <Object Include="salmon.obj">
+      <Filter>Resource Files</Filter>
+    </Object>
+  </ItemGroup>
 </Project>
