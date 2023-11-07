@@ -23,6 +23,7 @@
 #include "glut.h"
 
 
+
 //	This is a sample OpenGL / GLUT program
 //
 //	The objective is to draw a 3d object and change the color of the axes
@@ -114,6 +115,30 @@ const GLfloat BACKCOLOR[ ] = { 0., 0., 0., 1. };
 // line width for the axes:
 
 const GLfloat AXES_WIDTH   = 3.;
+
+// Project 4 Variables:
+bool Frozen;
+
+int GridDL;
+int DinoDL;
+int SphereDL;
+
+bool Follow;
+
+// Defining the grid
+#define XSIDE 5
+#define X0 (-XSIDE/2.0f)
+#define NX 100
+#define DX ( XSIDE/(float)NX)
+
+#define YGRID 0.0f
+
+#define ZSIDE 5
+#define Z0 (-ZSIDE/2.0f)
+#define NZ 100
+#define DZ ( ZSIDE/(float)NZ)
+
+
 
 // the color numbers:
 // this order must match the radio button order, which must match the order of the color names,
@@ -273,15 +298,21 @@ MulArray3(float factor, float a, float b, float c )
 
 // these are here for when you need them -- just uncomment the ones you need:
 
-//#include "setmaterial.cpp"
-//#include "setlight.cpp"
-//#include "osusphere.cpp"
+#include "setmaterial.cpp"
+#include "setlight.cpp"
+#include "osusphere.cpp"
 //#include "osucone.cpp"
 //#include "osutorus.cpp"
 //#include "bmptotexture.cpp"
-//#include "loadobjfile.cpp"
-//#include "keytime.cpp"
+#include "loadobjfile.cpp"
+#include "keytime.cpp"
 //#include "glslprogram.cpp"
+
+Keytimes Xpos1, Ypos1, Zpos1;
+Keytimes Xpos2, Ypos2, Zpos2;
+Keytimes ThetaX, ThetaY, ThetaZ;
+Keytimes RedVal, GreenVal, BlueVal;
+Keytimes CameraX, CameraY, CameraZ;
 
 
 // main program:
@@ -342,6 +373,136 @@ Animate( )
 	Time = (float)ms / (float)MS_PER_CYCLE;		// makes the value of Time between 0. and slightly less than 1.
 
 	// for example, if you wanted to spin an object in Display( ), you might call: glRotatef( 360.f*Time,   0., 1., 0. );
+	Xpos1.Init();
+	Xpos2.Init();
+	Ypos1.Init();
+	Ypos2.Init();
+	Zpos1.Init();
+	Zpos2.Init();
+
+	Xpos1.AddTimeValue(0.0, 0.0f);
+	Xpos1.AddTimeValue(0.125, 0.5f);
+	Xpos1.AddTimeValue(0.25, 1.0f);
+	Xpos1.AddTimeValue(0.375, 0.5f);
+	Xpos1.AddTimeValue(0.5, 0.0f);
+	Xpos1.AddTimeValue(0.625, -0.5f);
+	Xpos1.AddTimeValue(0.75, -1.0f);
+	Xpos1.AddTimeValue(0.875, -0.5f);
+	Xpos1.AddTimeValue(1.0, 0.0f);
+
+
+	Zpos1.AddTimeValue(0.0, 1.0f);
+	Zpos1.AddTimeValue(0.125, 0.5f);
+	Zpos1.AddTimeValue(0.25, 0.0f);
+	Zpos1.AddTimeValue(0.375, -0.5f);
+	Zpos1.AddTimeValue(0.5, -1.0f);
+	Zpos1.AddTimeValue(0.625, -0.5f);
+	Zpos1.AddTimeValue(0.75, 0.0f);
+	Zpos1.AddTimeValue(0.875, 0.5f);
+	Zpos1.AddTimeValue(1.0, 1.0f);
+
+	ThetaX.Init();
+	ThetaY.Init();
+	ThetaZ.Init();
+
+	ThetaY.AddTimeValue(0.0, 0.0f);
+	ThetaY.AddTimeValue(0.125, 45.0f);
+	ThetaY.AddTimeValue(0.25, 90.0f);
+	ThetaY.AddTimeValue(0.375, 135.0f);
+	ThetaY.AddTimeValue(0.5, 180.0f);
+	ThetaY.AddTimeValue(0.625, 225.0f);
+	ThetaY.AddTimeValue(0.75, 270.0f);
+	ThetaY.AddTimeValue(0.875, 315.0f);
+	ThetaY.AddTimeValue(1.0, 360.0f);
+
+	Xpos2.AddTimeValue(0.0, 0.75f);
+	Xpos2.AddTimeValue(0.125, 0.875f);
+	Xpos2.AddTimeValue(0.25, 1.0f);
+	Xpos2.AddTimeValue(0.5, -0.75f);
+	Xpos2.AddTimeValue(0.625, -0.875f);
+	Xpos2.AddTimeValue(0.75, -1.0f);
+	Xpos2.AddTimeValue(1.0, 0.75f);
+
+	Ypos2.AddTimeValue(0.0, 1.0f);
+	Ypos2.AddTimeValue(0.125, 0.5f);
+	Ypos2.AddTimeValue(0.25, 1.0f);
+	Ypos2.AddTimeValue(0.375, 0.5f);
+	Ypos2.AddTimeValue(0.5, 1.0f);
+	Ypos2.AddTimeValue(0.625, 0.5f);
+	Ypos2.AddTimeValue(0.75, 1.0f);
+	Ypos2.AddTimeValue(0.875, 0.5f);
+	Ypos2.AddTimeValue(1.0, 1.0f);
+
+	Zpos2.AddTimeValue(0.0, 1.0f);
+	Zpos2.AddTimeValue(0.25, -0.75f);
+	Zpos2.AddTimeValue(0.375, -0.875f);
+	Zpos2.AddTimeValue(0.5, -1.0f);
+	Zpos2.AddTimeValue(0.75, 0.75f);
+	Zpos2.AddTimeValue(0.875, 0.875f);
+	Zpos2.AddTimeValue(1.0, 1.0f);
+
+	RedVal.Init();
+	GreenVal.Init();
+	BlueVal.Init();
+
+	RedVal.AddTimeValue(0.0, 0.0f);
+	RedVal.AddTimeValue(0.125, 0.25f);
+	RedVal.AddTimeValue(0.25, 0.5f);
+	RedVal.AddTimeValue(0.375, 0.75f);
+	RedVal.AddTimeValue(0.5, 1.0f);
+	RedVal.AddTimeValue(0.625, 0.75f);
+	RedVal.AddTimeValue(0.75, 0.5f);
+	RedVal.AddTimeValue(0.875, 0.25f);
+	RedVal.AddTimeValue(1.0, 0.0f);
+
+	GreenVal.AddTimeValue(0.0, 1.0f);
+	GreenVal.AddTimeValue(0.125, 0.75f);
+	GreenVal.AddTimeValue(0.25, 0.5f);
+	GreenVal.AddTimeValue(0.375, 0.25f);
+	GreenVal.AddTimeValue(0.5, 0.0f);
+	GreenVal.AddTimeValue(0.625, 0.25f);
+	GreenVal.AddTimeValue(0.75, 0.5f);
+	GreenVal.AddTimeValue(0.875, 0.75f);
+	GreenVal.AddTimeValue(1.0, 1.0f);
+
+	BlueVal.AddTimeValue(0.0, 0.0f);
+	BlueVal.AddTimeValue(0.125, 0.25f);
+	BlueVal.AddTimeValue(0.25, 0.5f);
+	BlueVal.AddTimeValue(0.375, 0.75f);
+	BlueVal.AddTimeValue(0.5, 1.0f);
+	BlueVal.AddTimeValue(0.625, 0.75f);
+	BlueVal.AddTimeValue(0.75, 0.5f);
+	BlueVal.AddTimeValue(0.875, 0.25f);
+	BlueVal.AddTimeValue(1.0, 0.0f);
+
+	CameraX.Init();
+	CameraY.Init();
+	CameraZ.Init();
+
+	CameraX.AddTimeValue(0.0, 0.0f);
+	CameraX.AddTimeValue(0.125, 3.0f);
+	CameraX.AddTimeValue(0.25, 3.0f);
+	CameraX.AddTimeValue(0.375, 3.0f);
+	CameraX.AddTimeValue(0.5, 0.0f);
+	CameraX.AddTimeValue(0.625, -3.0);
+	CameraX.AddTimeValue(0.75, -3.0f);
+	CameraX.AddTimeValue(0.875, -3.0f);
+	CameraX.AddTimeValue(1.0, 0.0f);
+
+	CameraZ.AddTimeValue(0.0, 3.0f);
+	CameraZ.AddTimeValue(0.125, 3.0f);
+	CameraZ.AddTimeValue(0.25, 0.0f);
+	CameraZ.AddTimeValue(0.375, -3.0f);
+	CameraZ.AddTimeValue(0.5, -3.0f);
+	CameraZ.AddTimeValue(0.625, -3.0f);
+	CameraZ.AddTimeValue(0.75, 0.0f);
+	CameraZ.AddTimeValue(0.875, 3.0f);
+	CameraZ.AddTimeValue(1.0, 3.0f);
+
+
+
+
+
 
 	// force a call to Display( ) next time it is convenient:
 
@@ -403,8 +564,12 @@ Display( )
 	glLoadIdentity( );
 
 	// set the eye position, look-at position, and up-vector:
-
-	gluLookAt( 0.f, 0.f, 3.f,     0.f, 0.f, 0.f,     0.f, 1.f, 0.f );
+	if (Follow == true){
+		gluLookAt(CameraX.GetValue(Time), .5, CameraZ.GetValue(Time), Xpos1.GetValue(Time), Ypos1.GetValue(Time), Zpos1.GetValue(Time), 0.f, 0.5f, 0.f);
+	}
+	else {
+		gluLookAt(3.f, 3.f, 3.f, 0.f, 0.f, 0.f, 0.f, 1.f, 0.f);
+	}
 
 	// rotate the scene:
 
@@ -437,18 +602,48 @@ Display( )
 
 	if( AxesOn != 0 )
 	{
+		glPushAttrib(GL_CURRENT_BIT);
 		glColor3fv( &Colors[NowColor][0] );
 		glCallList( AxesList );
+		glPopAttrib();
 	}
+
+	glPushMatrix();
+	glTranslatef(Xpos2.GetValue(Time), Ypos2.GetValue(Time), Zpos2.GetValue(Time));
+	glColor3f(RedVal.GetValue(Time), GreenVal.GetValue(Time), BlueVal.GetValue(Time));
+	glTranslatef(0.0, 0.4, 0.0);
+	glCallList(SphereDL);
+	glPopMatrix();
+
+	//Inilize Lights
+	glEnable(GL_LIGHTING);
+
+	//Set Firefly light
+	SetPointLight(GL_LIGHT0, Xpos2.GetValue(Time), Ypos2.GetValue(Time), Zpos2.GetValue(Time), RedVal.GetValue(Time), GreenVal.GetValue(Time), BlueVal.GetValue(Time));
+
+	//SetPointLight(GL_LIGHT1, Xpos2.GetValue(Time), Ypos2.GetValue(Time), Zpos2.GetValue(Time), 0.0, 1.0, 0.0);
+
+	//SetPointLight(GL_LIGHT0, 0.0, 5.0, 0.0, 1.0f, 1.0f, 1.0f);
 
 	// since we are using glScalef( ), be sure the normals get unitized:
 
 	glEnable( GL_NORMALIZE );
 
+	glEnable(GL_LIGHTING);
+
 
 	// draw the box object by calling up its display list:
+	glPushMatrix();
+	glCallList(GridDL);
+	glPopMatrix();
 
-	glCallList( BoxList );
+	glPushMatrix();
+	fprintf(stderr, "%8.3f\t%8.3f\t%8.3f\n", Time, Xpos1.GetValue(Time), Zpos1.GetValue(Time));
+	glTranslatef(Xpos1.GetValue(Time), Ypos1.GetValue(Time), Zpos1.GetValue(Time));
+	
+	glRotatef(ThetaY.GetValue(Time), 0.0f, 1.0f, 0.0f);
+	glCallList(DinoDL);
+	glPopMatrix();
 
 #ifdef DEMO_Z_FIGHTING
 	if( DepthFightingOn != 0 )
@@ -496,6 +691,7 @@ Display( )
 
 	// be sure the graphics buffer has been sent:
 	// note: be sure to use glFlush( ) here, not glFinish( ) !
+	glDisable(GL_LIGHTING);
 
 	glFlush( );
 }
@@ -829,211 +1025,37 @@ InitLists( )
 	// create the object:
 
 
-	BoxList = glGenLists( 1 );
-	glNewList( BoxList, GL_COMPILE );
-
-
-	glBegin(GL_QUADS);
-		glColor3f(1.0f, 0.5f, 0.0f); // Orange
-			glVertex3f(-1.0f, -1.0f, -1.0f);
-			glVertex3f(1.0f, -1.0f, -1.0f);
-			glVertex3f(1.0f, -1.0f, 1.0f);
-			glVertex3f(-1.0f, -1.0f, 1.0f);
-	glEnd();
-
-	// Draw the front wall of the dog house
-	glBegin(GL_TRIANGLES);
-		glColor3f(0.0f,0.0f,1.0f); // blue
-			glVertex3f(-1.0f, -1.0f, 1.0f);
-			glVertex3f(1.0f, -1.0f, 1.0f);
-			glVertex3f(0.0f, 1.0f, 0.0f);
-	glEnd();
-
-	// Draw the side walls
-	glBegin(GL_QUADS);
-		glColor3f(1.0f, 0.0f, 0.0f); // red
-			glVertex3f(1.0f, -1.0f, -1.0f);
-			glVertex3f(1.0f, -1.0f, 1.0f);
-			glVertex3f(0.0f, 1.0f, 0.0f);
-			glVertex3f(0.0f, 1.0f, -1.0f);
-
-			glVertex3f(0.0f, 1.0f, -1.0f);
-			glVertex3f(0.0f, 1.0f, 0.0f);
-			glVertex3f(-1.0f, -1.0f, 1.0f);
-			glVertex3f(-1.0f, -1.0f, -1.0f);
-	glEnd();
-
-	glBegin(GL_TRIANGLES);
-		glColor3f(0.0f, 1.0f, 0.0f); // green
-			glVertex3f(1.0f, -0.25f, -1.0f);
-			glVertex3f(-1.0f, -0.25f, -1.0f);
-			glVertex3f(0.0f, 1.0f, -1.0f);
+	GridDL = glGenLists(1);
+	glNewList(GridDL, GL_COMPILE);
+		glPushMatrix();
+		SetMaterial(0.6f, 0.6f, 0.6f, 30.0f);
+		glNormal3f(0.0f, 1.0f, 0.0f);
+		for (int i = 0; i < NZ; i++) {
+			glBegin(GL_QUAD_STRIP);
+			for (int j = 0; j <= NX; j++) {
+				glVertex3f(X0 + (float)j * DX, YGRID, Z0 + (float)i * DZ);
+				glVertex3f(X0 + (float)j * DX, YGRID, Z0 + (float)(i + 1) * DZ);
+			}
 			glEnd();
-
-	glBegin(GL_TRIANGLES);
-		glColor3f(1.0f, 1.0f, 1.0f); // white
-			glVertex3f(-1.0f, -0.25f, 0.65f);
-			glVertex3f(1.0f, -0.25f, 0.65f);
-			glVertex3f(0.0f, 1.0f, 0.0f);
-	glEnd();
-
-	glBegin(GL_QUADS);
-		glColor3f( 1.0f, 0.0f, 0.6f ); // purple
-			glVertex3f(1.0f, -0.25f, .65f);
-			glVertex3f(0.0f, 1.0f, 0.0f);
-			glVertex3f(0.0f, 1.0f, -1.0f);
-			glVertex3f(1.0f, -0.25f, -1.0f);
-	glEnd();
-
-	glBegin(GL_QUADS);
-		glColor3f(1.0f, 0.0f, 0.6f); // purple
-			glVertex3f(-1.0f, -0.25f, 0.65f);
-			glVertex3f(0.0f, 1.0f, 0.0f);
-			glVertex3f(0.0f, 1.0f, -1.0f);
-			glVertex3f(-1.0f, -0.25f, -1.0f);
-	glEnd();
-
-	glBegin(GL_QUADS);
-		glColor3f(0.5f, 0.4f, 0.6f); // bluish grey
-			glVertex3f(-1.0f, -0.25f, 0.65f);
-			glVertex3f(-0.635f, -0.25f, 0.65f);
-			glVertex3f(-0.635f, -0.25f, -1.0f);
-			glVertex3f(-1.0f, -0.25f, -1.0f);
-	glEnd();
-
-	glBegin(GL_QUADS);
-		glColor3f(0.5f, 0.4f, 0.6f); // bluish grey
-			glVertex3f(1.0f, -0.25f, 0.65f);
-			glVertex3f(0.635f, -0.25f, 0.65f);
-			glVertex3f(0.635f, -0.25f, -1.0f);
-			glVertex3f(1.0f, -0.25f, -1.0f);
-	glEnd();
-
-	const int sides = 20; // Number of sides of the cylinder
-	const float radius = .1f;
-	const float height = 2.0f;
-
-	float posX1 = 1.0f;  // X position
-	float posY1 = -1.0f;  // Y position
-	float posZ1 = 0.0f;  // Z position
-	glPushMatrix();
-	glTranslatef(posX1, posY1, posZ1);  // Translate to the desired position
-	glRotatef(90.0f, 1.0f, 0.0f, 0.0f);
-	// cylinder "floaters"
-	glBegin(GL_QUAD_STRIP);
-	glColor3f(0.5f, 0.1f, 0.1f);
-	for (int i = 0; i <= sides; ++i) {
-		float theta = 2.0f * M_PI * static_cast<float>(i) / static_cast<float>(sides);
-		float x = radius * cos(theta);
-		float z = radius * sin(theta);
-
-		glVertex3f(x, height / 2.0f, z);
-		glVertex3f(x, -height / 2.0f, z);
-	}
-
-	glEnd();
-
-	glBegin(GL_POLYGON);
-	for (int i = 0; i < sides; ++i) {
-		float theta = 2.0f * M_PI * static_cast<float>(i) / static_cast<float>(sides);
-		float x = radius * cos(theta);
-		float z = radius * sin(theta);
-		glVertex3f(x, height / 2.0f, z);
-	}
-	glEnd();
-
-	glBegin(GL_POLYGON);
-	for (int i = 0; i < sides; ++i) {
-		float theta = 2.0f * M_PI * static_cast<float>(i) / static_cast<float>(sides);
-		float x = radius * cos(theta);
-		float z = radius * sin(theta);
-		glVertex3f(x, -height / 2.0f, z);
-	}
-	glEnd();
+		}
 	glPopMatrix();
+	glEndList();
 
-	float posX2 = -1.0f;  // X position
-	float posY2 = -1.0f;  // Y position
-	float posZ2 = 0.0f;  // Z position
-	glPushMatrix();
-	glTranslatef(posX2, posY2, posZ2);  // Translate to the desired position
-	glRotatef(90.0f, 1.0f, 0.0f, 0.0f);
+	DinoDL = glGenLists(1);
+	glNewList(DinoDL, GL_COMPILE);
+		glPushMatrix();
+		glTranslatef(0.0, 0.4, 0.0);
+		glScalef(0.1, 0.1, 0.1);
+		glShadeModel(GL_SMOOTH);
+		SetMaterial(1.0f, 0.0f, 0.0f, 30.0f);
+		LoadObjFile((char*)"dino.obj");
+		glPopMatrix();
+	glEndList();
 
-	glBegin(GL_QUAD_STRIP);
-
-	for (int i = 0; i <= sides; ++i) {
-		float theta = 2.0f * M_PI * static_cast<float>(i) / static_cast<float>(sides);
-		float x = radius * cos(theta);
-		float z = radius * sin(theta);
-
-		glVertex3f(x, height / 2.0f, z);
-		glVertex3f(x, -height / 2.0f, z);
-	}
-
-	glEnd();
-
-	glBegin(GL_POLYGON);
-	for (int i = 0; i < sides; ++i) {
-		float theta = 2.0f * M_PI * static_cast<float>(i) / static_cast<float>(sides);
-		float x = radius * cos(theta);
-		float z = radius * sin(theta);
-		glVertex3f(x, height / 2.0f, z);
-	}
-	glEnd();
-
-	glBegin(GL_POLYGON);
-	for (int i = 0; i < sides; ++i) {
-		float theta = 2.0f * M_PI * static_cast<float>(i) / static_cast<float>(sides);
-		float x = radius * cos(theta);
-		float z = radius * sin(theta);
-		glVertex3f(x, -height / 2.0f, z);
-	}
-	glEnd();
-	glPopMatrix();
-	// Back cylinder "floater" scaled up
-	float posX3 = 0.0f;  // X position
-	float posY3 = -1.0f;  // Y position
-	float posZ3 = 1.0f;  // Z position
-	glPushMatrix();
-	glTranslatef(posX3, posY3, posZ3);  // Translate to the desired position
-	glRotatef(90.0f, 1.0f, 0.0f, 0.0f);
-	glRotatef(90.0f, 0.0f, 0.0f, 1.0f);
-	glScalef(2.0f, 1.0f, 2.0f);
-
-	glBegin(GL_QUAD_STRIP);
-
-	for (int i = 0; i <= sides; ++i) {
-		float theta = 2.0f * M_PI * static_cast<float>(i) / static_cast<float>(sides);
-		float x = radius * cos(theta);
-		float z = radius * sin(theta);
-
-		glVertex3f(x, height / 2.0f, z);
-		glVertex3f(x, -height / 2.0f, z);
-	}
-
-	glEnd();
-
-	glBegin(GL_POLYGON);
-	for (int i = 0; i < sides; ++i) {
-		float theta = 2.0f * M_PI * static_cast<float>(i) / static_cast<float>(sides);
-		float x = radius * cos(theta);
-		float z = radius * sin(theta);
-		glVertex3f(x, height / 2.0f, z);
-	}
-	glEnd();
-
-	glBegin(GL_POLYGON);
-	for (int i = 0; i < sides; ++i) {
-		float theta = 2.0f * M_PI * static_cast<float>(i) / static_cast<float>(sides);
-		float x = radius * cos(theta);
-		float z = radius * sin(theta);
-		glVertex3f(x, -height / 2.0f, z);
-	}
-	glEnd();
-	glPopMatrix();
-
-
-	glEndList( );
+	SphereDL = glGenLists(1);
+		glNewList(SphereDL, GL_COMPILE);
+		OsuSphere(0.05, 20, 20);
+	glEndList();
 
 
 	// create the axes:
@@ -1071,7 +1093,20 @@ Keyboard( unsigned char c, int x, int y )
 		case 'Q':
 		case ESCAPE:
 			DoMainMenu( QUIT );	// will not return here
-			break;				// happy compiler
+			break;				// happy compiler'
+
+		case 'f':
+		case 'F':
+			Frozen = !Frozen;
+			if (Frozen)
+				glutIdleFunc(NULL);
+			else
+				glutIdleFunc(Animate);
+			break;
+		case 'y':
+		case 'Y':
+			Follow = !Follow;
+			break;
 
 		default:
 			fprintf( stderr, "Don't know what to do with keyboard hit: '%c' (0x%0x)\n", c, c );
@@ -1196,6 +1231,8 @@ Reset( )
 	NowColor = YELLOW;
 	NowProjection = PERSP;
 	Xrot = Yrot = 0.;
+	Frozen = false;
+	Follow = false;
 }
 
 
