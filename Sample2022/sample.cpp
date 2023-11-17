@@ -152,6 +152,37 @@ const GLfloat Colors[ ][3] =
 	{ 1., 0., 1. },		// magenta
 };
 
+// Planet Structure
+struct planet
+{
+	char* name;
+	char* file;
+	float                   scale;
+	int                     displayList;
+	int                    position;
+	unsigned int            texObject;
+};
+
+struct planet Planets[ ] = {
+	{ "Venus", "venus.bmp", 0.95f, 0, 0, 0 },
+	{ "Earth",      "earth.bmp",     1.00f, 0, 1, 0 },
+	{ "Mars",       "mars.bmp",      0.53f, 0, 2, 0 },
+	{ "Jupiter",    "jupiter.bmp",  11.21f, 0, 3, 0 },
+	{ "Saturn",     "saturn.bmp",    9.45f, 0, 4, 0 },
+	{ "Uranus",     "uranus.bmp",    4.01f, 0, 5, 0 },
+	{ "Neptune",    "neptune.bmp",   3.88f, 0, 6, 0 }
+};
+
+int currentPlanet;
+
+int SphereDL;
+
+float light_pos[3];
+
+bool TextureOn;
+
+int LightingMode;
+
 // fog parameters:
 
 const GLfloat FOGCOLOR[4] = { .0f, .0f, .0f, 1.f };
@@ -274,11 +305,11 @@ MulArray3(float factor, float a, float b, float c )
 // these are here for when you need them -- just uncomment the ones you need:
 
 //#include "setmaterial.cpp"
-//#include "setlight.cpp"
-//#include "osusphere.cpp"
+#include "setlight.cpp"
+#include "osusphere.cpp"
 //#include "osucone.cpp"
 //#include "osutorus.cpp"
-//#include "bmptotexture.cpp"
+#include "bmptotexture.cpp"
 //#include "loadobjfile.cpp"
 //#include "keytime.cpp"
 //#include "glslprogram.cpp"
@@ -441,14 +472,49 @@ Display( )
 		glCallList( AxesList );
 	}
 
+	glPushMatrix();
+	light_pos[0] = (Planets[currentPlanet].scale * 1.5f) * sin((F_2_PI)*Time);
+	light_pos[2] = (Planets[currentPlanet].scale * 1.5f) * cos((F_2_PI)*Time);
+	glTranslatef(light_pos[0], light_pos[1], light_pos[2]);
+	glScalef((Planets[currentPlanet].scale) * .2, (Planets[currentPlanet].scale) * .2, (Planets[currentPlanet].scale) * .2);
+	glCallList(SphereDL);
+	glPopMatrix();
+
+	if (TextureOn == true) {
+		glEnable(GL_TEXTURE_2D);
+	}
+	else {
+		glDisable(GL_TEXTURE_2D);
+	}
+
+	//Inilize Lights
+	glEnable(GL_LIGHTING);
+	glEnable(GL_LIGHT0);
+
+	SetPointLight(GL_LIGHT0, light_pos[0], light_pos[1], light_pos[2], 1.0, 1.0, 1.0);
+
+	if (LightingMode == 0) {
+		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+	}
+	else {
+		glTexEnvf( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE );
+	}
+
+
 	// since we are using glScalef( ), be sure the normals get unitized:
 
 	glEnable( GL_NORMALIZE );
 
+	glEnable(GL_LIGHTING);
 
-	// draw the box object by calling up its display list:
-
-	glCallList( BoxList );
+	if(currentPlanet >= 0 && currentPlanet < 7) {
+		struct planet* planet = &Planets[currentPlanet];
+		glPushMatrix();
+			glScalef(planet->scale, planet->scale, planet->scale);
+			glBindTexture(GL_TEXTURE_2D, planet->texObject);
+			glCallList(SphereDL);
+		glPopMatrix();
+	}
 
 #ifdef DEMO_Z_FIGHTING
 	if( DepthFightingOn != 0 )
@@ -806,6 +872,25 @@ InitGraphics( )
 #endif
 
 	// all other setups go here, such as GLSLProgram and KeyTime setups:
+	int width, height;
+	for (int i = 0; i < 7; i++) {
+		struct planet* planet = &Planets[i];
+		unsigned char* Texture = BmpToTexture(planet->file, &width, &height);
+		if (Texture == NULL) {
+			fprintf(stderr, "Error reading %s\n", planet->file);
+		}
+		else {
+			fprintf(stderr, "Texture %s read OK; width %d; height %d;\n", planet->file, width, height);
+		}
+		glGenTextures(1, &planet->texObject);
+		glBindTexture(GL_TEXTURE_2D, planet->texObject);
+		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexImage2D(GL_TEXTURE_2D, 0, 3, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, Texture);
+	}
 
 }
 
@@ -827,213 +912,11 @@ InitLists( )
 	glutSetWindow( MainWindow );
 
 	// create the object:
-
-
-	BoxList = glGenLists( 1 );
-	glNewList( BoxList, GL_COMPILE );
-
-
-	glBegin(GL_QUADS);
-		glColor3f(1.0f, 0.5f, 0.0f); // Orange
-			glVertex3f(-1.0f, -1.0f, -1.0f);
-			glVertex3f(1.0f, -1.0f, -1.0f);
-			glVertex3f(1.0f, -1.0f, 1.0f);
-			glVertex3f(-1.0f, -1.0f, 1.0f);
-	glEnd();
-
-	// Draw the front wall of the dog house
-	glBegin(GL_TRIANGLES);
-		glColor3f(0.0f,0.0f,1.0f); // blue
-			glVertex3f(-1.0f, -1.0f, 1.0f);
-			glVertex3f(1.0f, -1.0f, 1.0f);
-			glVertex3f(0.0f, 1.0f, 0.0f);
-	glEnd();
-
-	// Draw the side walls
-	glBegin(GL_QUADS);
-		glColor3f(1.0f, 0.0f, 0.0f); // red
-			glVertex3f(1.0f, -1.0f, -1.0f);
-			glVertex3f(1.0f, -1.0f, 1.0f);
-			glVertex3f(0.0f, 1.0f, 0.0f);
-			glVertex3f(0.0f, 1.0f, -1.0f);
-
-			glVertex3f(0.0f, 1.0f, -1.0f);
-			glVertex3f(0.0f, 1.0f, 0.0f);
-			glVertex3f(-1.0f, -1.0f, 1.0f);
-			glVertex3f(-1.0f, -1.0f, -1.0f);
-	glEnd();
-
-	glBegin(GL_TRIANGLES);
-		glColor3f(0.0f, 1.0f, 0.0f); // green
-			glVertex3f(1.0f, -0.25f, -1.0f);
-			glVertex3f(-1.0f, -0.25f, -1.0f);
-			glVertex3f(0.0f, 1.0f, -1.0f);
-			glEnd();
-
-	glBegin(GL_TRIANGLES);
-		glColor3f(1.0f, 1.0f, 1.0f); // white
-			glVertex3f(-1.0f, -0.25f, 0.65f);
-			glVertex3f(1.0f, -0.25f, 0.65f);
-			glVertex3f(0.0f, 1.0f, 0.0f);
-	glEnd();
-
-	glBegin(GL_QUADS);
-		glColor3f( 1.0f, 0.0f, 0.6f ); // purple
-			glVertex3f(1.0f, -0.25f, .65f);
-			glVertex3f(0.0f, 1.0f, 0.0f);
-			glVertex3f(0.0f, 1.0f, -1.0f);
-			glVertex3f(1.0f, -0.25f, -1.0f);
-	glEnd();
-
-	glBegin(GL_QUADS);
-		glColor3f(1.0f, 0.0f, 0.6f); // purple
-			glVertex3f(-1.0f, -0.25f, 0.65f);
-			glVertex3f(0.0f, 1.0f, 0.0f);
-			glVertex3f(0.0f, 1.0f, -1.0f);
-			glVertex3f(-1.0f, -0.25f, -1.0f);
-	glEnd();
-
-	glBegin(GL_QUADS);
-		glColor3f(0.5f, 0.4f, 0.6f); // bluish grey
-			glVertex3f(-1.0f, -0.25f, 0.65f);
-			glVertex3f(-0.635f, -0.25f, 0.65f);
-			glVertex3f(-0.635f, -0.25f, -1.0f);
-			glVertex3f(-1.0f, -0.25f, -1.0f);
-	glEnd();
-
-	glBegin(GL_QUADS);
-		glColor3f(0.5f, 0.4f, 0.6f); // bluish grey
-			glVertex3f(1.0f, -0.25f, 0.65f);
-			glVertex3f(0.635f, -0.25f, 0.65f);
-			glVertex3f(0.635f, -0.25f, -1.0f);
-			glVertex3f(1.0f, -0.25f, -1.0f);
-	glEnd();
-
-	const int sides = 20; // Number of sides of the cylinder
-	const float radius = .1f;
-	const float height = 2.0f;
-
-	float posX1 = 1.0f;  // X position
-	float posY1 = -1.0f;  // Y position
-	float posZ1 = 0.0f;  // Z position
-	glPushMatrix();
-	glTranslatef(posX1, posY1, posZ1);  // Translate to the desired position
-	glRotatef(90.0f, 1.0f, 0.0f, 0.0f);
-	// cylinder "floaters"
-	glBegin(GL_QUAD_STRIP);
-	glColor3f(0.5f, 0.1f, 0.1f);
-	for (int i = 0; i <= sides; ++i) {
-		float theta = 2.0f * M_PI * static_cast<float>(i) / static_cast<float>(sides);
-		float x = radius * cos(theta);
-		float z = radius * sin(theta);
-
-		glVertex3f(x, height / 2.0f, z);
-		glVertex3f(x, -height / 2.0f, z);
-	}
-
-	glEnd();
-
-	glBegin(GL_POLYGON);
-	for (int i = 0; i < sides; ++i) {
-		float theta = 2.0f * M_PI * static_cast<float>(i) / static_cast<float>(sides);
-		float x = radius * cos(theta);
-		float z = radius * sin(theta);
-		glVertex3f(x, height / 2.0f, z);
-	}
-	glEnd();
-
-	glBegin(GL_POLYGON);
-	for (int i = 0; i < sides; ++i) {
-		float theta = 2.0f * M_PI * static_cast<float>(i) / static_cast<float>(sides);
-		float x = radius * cos(theta);
-		float z = radius * sin(theta);
-		glVertex3f(x, -height / 2.0f, z);
-	}
-	glEnd();
-	glPopMatrix();
-
-	float posX2 = -1.0f;  // X position
-	float posY2 = -1.0f;  // Y position
-	float posZ2 = 0.0f;  // Z position
-	glPushMatrix();
-	glTranslatef(posX2, posY2, posZ2);  // Translate to the desired position
-	glRotatef(90.0f, 1.0f, 0.0f, 0.0f);
-
-	glBegin(GL_QUAD_STRIP);
-
-	for (int i = 0; i <= sides; ++i) {
-		float theta = 2.0f * M_PI * static_cast<float>(i) / static_cast<float>(sides);
-		float x = radius * cos(theta);
-		float z = radius * sin(theta);
-
-		glVertex3f(x, height / 2.0f, z);
-		glVertex3f(x, -height / 2.0f, z);
-	}
-
-	glEnd();
-
-	glBegin(GL_POLYGON);
-	for (int i = 0; i < sides; ++i) {
-		float theta = 2.0f * M_PI * static_cast<float>(i) / static_cast<float>(sides);
-		float x = radius * cos(theta);
-		float z = radius * sin(theta);
-		glVertex3f(x, height / 2.0f, z);
-	}
-	glEnd();
-
-	glBegin(GL_POLYGON);
-	for (int i = 0; i < sides; ++i) {
-		float theta = 2.0f * M_PI * static_cast<float>(i) / static_cast<float>(sides);
-		float x = radius * cos(theta);
-		float z = radius * sin(theta);
-		glVertex3f(x, -height / 2.0f, z);
-	}
-	glEnd();
-	glPopMatrix();
-	// Back cylinder "floater" scaled up
-	float posX3 = 0.0f;  // X position
-	float posY3 = -1.0f;  // Y position
-	float posZ3 = 1.0f;  // Z position
-	glPushMatrix();
-	glTranslatef(posX3, posY3, posZ3);  // Translate to the desired position
-	glRotatef(90.0f, 1.0f, 0.0f, 0.0f);
-	glRotatef(90.0f, 0.0f, 0.0f, 1.0f);
-	glScalef(2.0f, 1.0f, 2.0f);
-
-	glBegin(GL_QUAD_STRIP);
-
-	for (int i = 0; i <= sides; ++i) {
-		float theta = 2.0f * M_PI * static_cast<float>(i) / static_cast<float>(sides);
-		float x = radius * cos(theta);
-		float z = radius * sin(theta);
-
-		glVertex3f(x, height / 2.0f, z);
-		glVertex3f(x, -height / 2.0f, z);
-	}
-
-	glEnd();
-
-	glBegin(GL_POLYGON);
-	for (int i = 0; i < sides; ++i) {
-		float theta = 2.0f * M_PI * static_cast<float>(i) / static_cast<float>(sides);
-		float x = radius * cos(theta);
-		float z = radius * sin(theta);
-		glVertex3f(x, height / 2.0f, z);
-	}
-	glEnd();
-
-	glBegin(GL_POLYGON);
-	for (int i = 0; i < sides; ++i) {
-		float theta = 2.0f * M_PI * static_cast<float>(i) / static_cast<float>(sides);
-		float x = radius * cos(theta);
-		float z = radius * sin(theta);
-		glVertex3f(x, -height / 2.0f, z);
-	}
-	glEnd();
-	glPopMatrix();
-
-
+	SphereDL = glGenLists( 1 );
+	glNewList( SphereDL, GL_COMPILE );
+		OsuSphere(1.0, 200, 200);
 	glEndList( );
+
 
 
 	// create the axes:
@@ -1069,6 +952,49 @@ Keyboard( unsigned char c, int x, int y )
 
 		case 'q':
 		case 'Q':
+
+		case 'd':
+		case 'D':
+			if (currentPlanet == 6)
+			{
+				currentPlanet = 0;
+			}
+			else {
+				currentPlanet++;
+			}
+			break;
+
+		case 'a':
+		case 'A':
+			if (currentPlanet == 0)
+			{
+				currentPlanet = 6;
+			}
+			else {
+				currentPlanet--;
+			}
+			break;
+
+		case'w':
+		case'W':
+			if (LightingMode == 0) {
+				LightingMode = 1;
+			}
+			else {
+				LightingMode = 0;
+			}
+			break;
+
+		case 's':
+		case 'S':
+			if (TextureOn == true) {
+			TextureOn = false;
+		}
+			else {
+			TextureOn = true;
+		}
+		break;
+
 		case ESCAPE:
 			DoMainMenu( QUIT );	// will not return here
 			break;				// happy compiler
@@ -1082,6 +1008,7 @@ Keyboard( unsigned char c, int x, int y )
 	glutSetWindow( MainWindow );
 	glutPostRedisplay( );
 }
+
 
 
 // called when the mouse button transitions down or up:
@@ -1186,7 +1113,7 @@ void
 Reset( )
 {
 	ActiveButton = 0;
-	AxesOn = 1;
+	AxesOn = 0;
 	DebugOn = 0;
 	DepthBufferOn = 1;
 	DepthFightingOn = 0;
@@ -1196,6 +1123,9 @@ Reset( )
 	NowColor = YELLOW;
 	NowProjection = PERSP;
 	Xrot = Yrot = 0.;
+	currentPlanet = 1;
+	LightingMode = 0;
+	TextureOn = true;
 }
 
 
