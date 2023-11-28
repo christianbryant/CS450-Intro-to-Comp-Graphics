@@ -173,15 +173,9 @@ struct planet Planets[ ] = {
 	{ "Neptune",    "neptune.bmp",   3.88f, 0, 6, 0 }
 };
 
-int currentPlanet;
-
 int SphereDL;
 
 float light_pos[3];
-
-bool TextureOn;
-
-int LightingMode;
 
 // fog parameters:
 
@@ -227,6 +221,7 @@ int		Xmouse, Ymouse;			// mouse values
 float	Xrot, Yrot;				// rotation angles in degrees
 
 
+
 // function prototypes:
 
 void	Animate( );
@@ -259,6 +254,9 @@ float			Dot(float [3], float [3]);
 float			Unit(float [3], float [3]);
 float			Unit(float [3]);
 
+
+float computeRs(float time);
+float computeRt(float time);
 
 // utility to create an array from 3 separate values:
 
@@ -311,8 +309,36 @@ MulArray3(float factor, float a, float b, float c )
 //#include "osutorus.cpp"
 #include "bmptotexture.cpp"
 //#include "loadobjfile.cpp"
-//#include "keytime.cpp"
-//#include "glslprogram.cpp"
+#include "keytime.cpp"
+#include "glslprogram.cpp"
+
+
+// Project 6 Global Variables
+GLSLProgram Pattern;
+
+unsigned char* Texture;
+GLuint TexName;
+
+bool keytime;
+bool time_based;
+
+Keytimes Sc, Tc;
+
+GLuint GridDL;
+
+// Defining the grid
+#define XSIDE 5
+#define X0 (-XSIDE/2.0f)
+#define NX 100
+#define DX ( XSIDE/(float)NX)
+
+#define YGRID 0.0f
+
+#define ZSIDE 5
+#define Z0 (-ZSIDE/2.0f)
+#define NZ 100
+#define DZ ( ZSIDE/(float)NZ)
+
 
 
 // main program:
@@ -373,6 +399,18 @@ Animate( )
 	Time = (float)ms / (float)MS_PER_CYCLE;		// makes the value of Time between 0. and slightly less than 1.
 
 	// for example, if you wanted to spin an object in Display( ), you might call: glRotatef( 360.f*Time,   0., 1., 0. );
+	Sc.Init();
+	Tc.Init();
+
+	Sc.AddTimeValue(0.0f, 0.0f);
+	Sc.AddTimeValue(0.5f, 1.0f);
+	Sc.AddTimeValue(1.0f, 0.0f);
+
+	Tc.AddTimeValue(0.0f, 1.0f);
+	Tc.AddTimeValue(0.5f, 0.0f);
+	Tc.AddTimeValue(1.0f, 1.0f);
+
+
 
 	// force a call to Display( ) next time it is convenient:
 
@@ -472,49 +510,59 @@ Display( )
 		glCallList( AxesList );
 	}
 
+
 	glPushMatrix();
-	light_pos[0] = (Planets[currentPlanet].scale * 1.5f) * sin((F_2_PI)*Time);
-	light_pos[2] = (Planets[currentPlanet].scale * 1.5f) * cos((F_2_PI)*Time);
+	light_pos[0] = 0.75f;
+	light_pos[1] = 0.75f;
+	light_pos[2] = 0.75f;
 	glTranslatef(light_pos[0], light_pos[1], light_pos[2]);
-	glScalef((Planets[currentPlanet].scale) * .2, (Planets[currentPlanet].scale) * .2, (Planets[currentPlanet].scale) * .2);
+	glScalef((Planets[1].scale) * .2, (Planets[1].scale) * .2, (Planets[1].scale) * .2);
 	glCallList(SphereDL);
 	glPopMatrix();
 
-	if (TextureOn == true) {
-		glEnable(GL_TEXTURE_2D);
-	}
-	else {
-		glDisable(GL_TEXTURE_2D);
-	}
 
 	//Inilize Lights
 	glEnable(GL_LIGHTING);
+	SetPointLight(GL_LIGHT0, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.f);
+	SetSpotLight(GL_LIGHT1, 1.0f, 1.0f, 1.0f, -1.0f, -1.0f, -1.f, 1.0f, 1.0f, 1.0f);
 	glEnable(GL_LIGHT0);
+	glEnable(GL_LIGHT1);
 
-	SetPointLight(GL_LIGHT0, light_pos[0], light_pos[1], light_pos[2], 1.0, 1.0, 1.0);
 
-	if (LightingMode == 0) {
-		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-	}
-	else {
-		glTexEnvf( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE );
-	}
 
 
 	// since we are using glScalef( ), be sure the normals get unitized:
 
 	glEnable( GL_NORMALIZE );
+	glEnable(GL_TEXTURE_2D);
 
-	glEnable(GL_LIGHTING);
+	glPushMatrix();
+		glCallList(GridDL);
+	glPopMatrix();
+	float s0 = 0.0f;
+	float t0 = 0.0f;
+	float rs0 = 0.0f;
+	float rt0 = 0.0f;
+	glPushMatrix();
+	Pattern.Use();
+	//if (keytime) {
+	//	s0 = Sc.GetValue(Time);
+	//	t0 = Tc.GetValue(Time);
+	//}
+	//if (time_based) {
+	//	rs0 = computeRs(Time);
+	//	rt0 = computeRt(Time);
+	//}
 
-	if(currentPlanet >= 0 && currentPlanet < 7) {
-		struct planet* planet = &Planets[currentPlanet];
-		glPushMatrix();
-			glScalef(planet->scale, planet->scale, planet->scale);
-			glBindTexture(GL_TEXTURE_2D, planet->texObject);
-			glCallList(SphereDL);
-		glPopMatrix();
-	}
+	Pattern.SetUniformVariable("uSc", s0);
+	Pattern.SetUniformVariable("uTc", t0);
+	Pattern.SetUniformVariable("uRs", rs0);
+	Pattern.SetUniformVariable("uRt", rt0);
+
+	glCallList(SphereDL);
+	Pattern.UnUse();
+	glPopMatrix();
+	glDisable(GL_LIGHTING);
 
 #ifdef DEMO_Z_FIGHTING
 	if( DepthFightingOn != 0 )
@@ -872,26 +920,37 @@ InitGraphics( )
 #endif
 
 	// all other setups go here, such as GLSLProgram and KeyTime setups:
-	int width, height;
-	for (int i = 0; i < 7; i++) {
-		struct planet* planet = &Planets[i];
-		unsigned char* Texture = BmpToTexture(planet->file, &width, &height);
-		if (Texture == NULL) {
-			fprintf(stderr, "Error reading %s\n", planet->file);
-		}
-		else {
-			fprintf(stderr, "Texture %s read OK; width %d; height %d;\n", planet->file, width, height);
-		}
-		glGenTextures(1, &planet->texObject);
-		glBindTexture(GL_TEXTURE_2D, planet->texObject);
-		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexImage2D(GL_TEXTURE_2D, 0, 3, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, Texture);
-	}
 
+
+
+	//glGenTextures(1, &TexName);
+	//int nums, numt;
+	//Texture = BmpToTexture("earth.bmp", &nums, &numt);
+	//glBindTexture(GL_TEXTURE_2D, TexName);
+	//glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
+	//glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
+	//glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+	//glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+	//glTexImage2D( GL_TEXTURE_2D, 0, 3, nums, numt, 0, GL_RGB, GL_UNSIGNED_BYTE, Texture );
+
+	Pattern.Init();
+	bool valid = Pattern.Create("pattern.vert", "pattern.frag");
+	if (!valid)
+	{
+		fprintf(stderr, "Shader cannot be created!\n");
+	}
+	else
+	{
+		fprintf(stderr, "Shader created.\n");
+	}
+	Pattern.Use();
+	Pattern.SetUniformVariable("uKa", .1, .0, .0);
+	Pattern.SetUniformVariable("uKd", .4, .0, .0);
+	Pattern.SetUniformVariable("uKs", .5, .0, .0);
+	Pattern.SetUniformVariable("uColor", 1.0, 1.0, 1.0);
+	Pattern.SetUniformVariable("uSpecularColor", 1.0, 1.0, 1.0);
+	Pattern.SetUniformVariable("uShininess", 10.f);
+	Pattern.UnUse();
 }
 
 
@@ -914,8 +973,25 @@ InitLists( )
 	// create the object:
 	SphereDL = glGenLists( 1 );
 	glNewList( SphereDL, GL_COMPILE );
-		OsuSphere(1.0, 200, 200);
+		OsuSphere(1.0, 100, 100);
 	glEndList( );
+
+
+	// Create floor
+	GridDL = glGenLists(1);
+	glNewList(GridDL, GL_COMPILE);
+		glPushMatrix();
+		glNormal3f(0.0f, 1.0f, 0.0f);
+		for (int i = 0; i < NZ; i++) {
+			glBegin(GL_QUAD_STRIP);
+			for (int j = 0; j <= NX; j++) {
+				glVertex3f(X0 + (float)j * DX, YGRID, Z0 + (float)i * DZ);
+				glVertex3f(X0 + (float)j * DX, YGRID, Z0 + (float)(i + 1) * DZ);
+			}
+			glEnd();
+		}
+	glPopMatrix();
+	glEndList();
 
 
 
@@ -953,46 +1029,14 @@ Keyboard( unsigned char c, int x, int y )
 		case 'q':
 		case 'Q':
 
-		case 'd':
-		case 'D':
-			if (currentPlanet == 6)
-			{
-				currentPlanet = 0;
-			}
-			else {
-				currentPlanet++;
-			}
+		case 'k':
+		case 'K':
+			keytime = !keytime;
 			break;
-
-		case 'a':
-		case 'A':
-			if (currentPlanet == 0)
-			{
-				currentPlanet = 6;
-			}
-			else {
-				currentPlanet--;
-			}
+		case 't':
+		case 'T':
+			time_based = !time_based;
 			break;
-
-		case'w':
-		case'W':
-			if (LightingMode == 0) {
-				LightingMode = 1;
-			}
-			else {
-				LightingMode = 0;
-			}
-			break;
-
-		case 's':
-		case 'S':
-			if (TextureOn == true) {
-			TextureOn = false;
-		}
-			else {
-			TextureOn = true;
-		}
 		break;
 
 		case ESCAPE:
@@ -1123,9 +1167,8 @@ Reset( )
 	NowColor = YELLOW;
 	NowProjection = PERSP;
 	Xrot = Yrot = 0.;
-	currentPlanet = 1;
-	LightingMode = 0;
-	TextureOn = true;
+	keytime = true;
+	time_based = true;
 }
 
 
@@ -1393,4 +1436,15 @@ Unit( float v[3] )
 		v[2] /= dist;
 	}
 	return dist;
+}
+
+
+float computeRs(float time) {
+	// Example: Sinusoidal function with a frequency of 1 and amplitude of 0.5
+	return 0.5 * sin(time) + 1.0;
+}
+
+float computeRt(float time) {
+	// Example: Cosine function with a frequency of 0.8 and amplitude of 0.3
+	return 0.3 * cos(0.8 * time) + 1.0;
 }
