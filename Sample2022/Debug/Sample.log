@@ -1,10 +1,5 @@
 ﻿  sample.cpp
-C:\Users\Jax\Downloads\SampleWindows\Sample2022\sample.cpp(519,80): warning C4244: 'argument': conversion from 'double' to 'GLfloat', possible loss of data
-C:\Users\Jax\Downloads\SampleWindows\Sample2022\sample.cpp(519,55): warning C4244: 'argument': conversion from 'double' to 'GLfloat', possible loss of data
-C:\Users\Jax\Downloads\SampleWindows\Sample2022\sample.cpp(519,30): warning C4244: 'argument': conversion from 'double' to 'GLfloat', possible loss of data
-C:\Users\Jax\Downloads\SampleWindows\Sample2022\sample.cpp(947,36): warning C4305: 'argument': truncation from 'double' to 'float'
-C:\Users\Jax\Downloads\SampleWindows\Sample2022\sample.cpp(948,36): warning C4305: 'argument': truncation from 'double' to 'float'
-C:\Users\Jax\Downloads\SampleWindows\Sample2022\sample.cpp(1447,25): warning C4244: 'return': conversion from 'double' to 'float', possible loss of data
-C:\Users\Jax\Downloads\SampleWindows\Sample2022\sample.cpp(1452,31): warning C4244: 'return': conversion from 'double' to 'float', possible loss of data
+C:\Users\Jax\Downloads\SampleWindows\Sample2022\sample.cpp(1218,13): warning C4244: 'return': conversion from 'double' to 'float', possible loss of data
+C:\Users\Jax\Downloads\SampleWindows\Sample2022\sample.cpp(1223,13): warning C4244: 'return': conversion from 'double' to 'float', possible loss of data
 sample.obj : warning LNK4075: ignoring '/EDITANDCONTINUE' due to '/INCREMENTAL:NO' specification
   Sample.vcxproj -> C:\Users\Jax\Downloads\SampleWindows\Sample2022\Debug\Sample.exe
