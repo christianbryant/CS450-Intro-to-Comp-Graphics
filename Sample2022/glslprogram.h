@@ -1,87 +1,105 @@
-#ifndef GLSLPROGRAM_CPP
-#define GLSLPROGRAM_CPP
+#ifndef GLSLPROGRAM_H
+#define GLSLPROGRAM_H
 
 #include <ctype.h>
 #define _USE_MATH_DEFINES
 #include <stdio.h>
 #include <math.h>
-#include <string.h>
 
 #ifdef WIN32
 #include <windows.h>
 #endif
 
-// if on a Mac, don't need glew.h and the <GL/ should be <OpenGL/
-
+#ifdef WIN32
 #include "glew.h"
+#endif
+
+#ifdef __APPLE__
+#include <OpenGL/gl.h>
+#include <OpenGL/glu.h>
+#else
 #include <GL/gl.h>
 #include <GL/glu.h>
+#endif
 #include "glut.h"
+#include "glm/glm.hpp"
 #include <map>
 #include <stdarg.h>
 
-inline int GetOSU( int flag )
+
+inline int GetOSU(int flag)
 {
 	int i;
-	glGetIntegerv( flag, &i );
+	glGetIntegerv(flag, &i);
 	return i;
 }
 
 
-void	CheckGlErrors( const char* );
+void	CheckGlErrors(const char*);
 
 
 
 class GLSLProgram
 {
-  private:
-	std::map<char *, int>	AttributeLocs;
-	char *			Ffile;
+private:
+	std::map<char*, int>	AttributeLocs;
+	char* Cfile;
+	unsigned int		Cshader;
+	char* Ffile;
 	unsigned int		Fshader;
+	char* Gfile;
+	GLuint			Gshader;
 	bool			IncludeGstap;
+	GLenum			InputTopology;
+	GLenum			OutputTopology;
 	GLuint			Program;
-	std::map<char *, int>	UniformLocs;
+	char* TCfile;
+	GLuint			TCshader;
+	char* TEfile;
+	GLuint			TEshader;
+	std::map<char*, int>	UniformLocs;
 	bool			Valid;
-	char *			Vfile;
+	char* Vfile;
 	GLuint			Vshader;
 	bool			Verbose;
 
 	static int		CurrentProgram;
 
-	void	AttachShader( GLuint );
+	void	AttachShader(GLuint);
 	bool	CanDoFragmentShaders;
 	bool	CanDoVertexShaders;
-	int	CompileShader( GLuint );
-	bool	CreateHelper( char *, ... );
-	int	GetAttributeLocation( char * );
-	int	GetUniformLocation( char * );
+	int	CompileShader(GLuint);
+	bool	CreateHelper(char*, ...);
+	int	GetAttributeLocation(char*);
+	int	GetUniformLocation(char*);
 
 
-  public:
-		GLSLProgram( );
+public:
+	GLSLProgram();
 
-	bool	Create( char *, char * = NULL, char * = NULL, char * = NULL, char * = NULL, char * = NULL );
-	void	DisableVertexAttribArray( const char * );
-	void	EnableVertexAttribArray( const char * );
+	bool	Create(char*, char* = NULL, char* = NULL, char* = NULL, char* = NULL, char* = NULL);
 	void	Init( );
-	bool	IsExtensionSupported( const char * );
-	bool	IsNotValid( );
-	bool	IsValid( );
-	void	SetAttributePointer3fv( char *, float * );
-	void	SetAttributeVariable( char *, int );
-	void	SetAttributeVariable( char *, float );
-	void	SetAttributeVariable( char *, float, float, float );
-	void	SetAttributeVariable( char *, float[3] );
-	void	VertexAttrib3f( const char *, float, float, float );
-	void	SetUniformVariable( char *, int );
-	void	SetUniformVariable( char *, float );
-	void	SetUniformVariable( char *, float, float, float );
-	void	SetUniformVariable( char *, float[3] );
-	void	SetVerbose( bool );
+	bool	IsExtensionSupported(const char*);
+	bool	IsNotValid();
+	bool	IsValid();
+	void	SetAttributeVariable(char*, int);
+	void	SetAttributeVariable(char*, float);
+	void	SetAttributeVariable(char*, float, float, float);
+	void	SetAttributeVariable(char*, float[3]);
+	void	SetGstap(bool);
+	void	SetInputTopology(GLenum);
+	void	SetOutputTopology(GLenum);
+	void	SetUniformVariable(char*, int);
+	void	SetUniformVariable(char*, float);
+	void	SetUniformVariable(char*, float, float, float);
+	void	SetUniformVariable(char*, float[3]);
+	void	SetUniformVariable(char*, glm::mat4 &);
+	void	SetUniformVariable(char*, glm::vec3 &);
+	void	SetVerbose(bool);
 	void	UnUse( );
-	void	Use( );
-	void	Use( GLuint );
-	void	UseFixedFunction( );
+	void	Use();
+	void	Use(GLuint);
+	void	UseFixedFunction();
 };
 
-#endif		// #ifndef GLSLPROGRAM_CPP
+#endif		// #ifndef GLSLPROGRAM_H
